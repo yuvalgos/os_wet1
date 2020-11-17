@@ -1,20 +1,21 @@
 //		commands.c
 //********************************************
 #include "commands.h"
+
 //********************************************
 // function name: ExeCmd
 // Description: interperts and executes built-in commands
 // Parameters: pointer to jobs, command string
 // Returns: 0 - success,1 - failure
 //**************************************************************************************
-int ExeCmd(void* jobs, char* lineSize, char* cmdString)
+int ExeCmd(void* jobs, char* lineSize, char* cmdString, std::list<std::string> command_history)
 {
 	char* cmd; 
 	char* args[MAX_ARG];
-	char pwd[MAX_LINE_SIZE];
-	char* delimiters = " \t\n";  
+	//char pwd[MAX_LINE_SIZE];
+	const char* delimiters = " \t\n";  
 	int i = 0, num_arg = 0;
-	bool illegal_cmd = FALSE; // illegal command
+	bool illegal_cmd = false; // illegal command
     	cmd = strtok(lineSize, delimiters);
 	if (cmd == NULL)
 		return 0; 
@@ -43,9 +44,10 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString)
 	}
 	
 	/*************************************************/
-	else if (!strcmp(cmd, "mkdir"))
+	else if (!strcmp(cmd, "history"))
 	{
- 		
+ 		for(auto iter_command = command_history.begin(); iter_command !=command_history.end(); iter_command++ )
+			std::cout << *iter_command << std::endl;
 	}
 	/*************************************************/
 	
@@ -79,7 +81,7 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString)
  		ExeExternal(args, cmdString);
 	 	return 0;
 	}
-	if (illegal_cmd == TRUE)
+	if (illegal_cmd == true)
 	{
 		printf("smash error: > \"%s\"\n", cmdString);
 		return 1;
@@ -94,32 +96,32 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString)
 //**************************************************************************************
 void ExeExternal(char *args[MAX_ARG], char* cmdString)
 {
-	int pID;
-    	switch(pID = fork()) 
-	{
-    		case -1: 
-					// Add your code here (error)
+	// int pID;
+    // switch(pID = fork()) 
+	// {
+    // 		case -1: 
+	// 				// Add your code here (error)
+	// 				break;
+	// 				/* 
+	// 				your code
+	// 				*/
+    //     	case 0 :
+    //             	// Child Process
+    //            		//setpgrp();
 					
-					/* 
-					your code
-					*/
-        	case 0 :
-                	// Child Process
-               		setpgrp();
+	// 		        // Add your code here (execute an external command)
 					
-			        // Add your code here (execute an external command)
-					
-					/* 
-					your code
-					*/
+	// 				/* 
+	// 				your code
+	// 				*/
 			
-			default:
-                	// Add your code here
-					
-					/* 
-					your code
-					*/
-	}
+	// 		default:
+    //             	// Add your code here
+	// 				break;
+	// 				/* 
+	// 				your code
+	// 				*/
+	// }
 }
 //**************************************************************************************
 // function name: ExeComp
@@ -129,8 +131,8 @@ void ExeExternal(char *args[MAX_ARG], char* cmdString)
 //**************************************************************************************
 int ExeComp(char* lineSize)
 {
-	char ExtCmd[MAX_LINE_SIZE+2];
-	char *args[MAX_ARG];
+	//char ExtCmd[MAX_LINE_SIZE+2];
+	//char *args[MAX_ARG];
     if ((strstr(lineSize, "|")) || (strstr(lineSize, "<")) || (strstr(lineSize, ">")) || (strstr(lineSize, "*")) || (strstr(lineSize, "?")) || (strstr(lineSize, ">>")) || (strstr(lineSize, "|&")))
     {
 		// Add your code here (execute a complicated command)
@@ -150,9 +152,9 @@ int ExeComp(char* lineSize)
 int BgCmd(char* lineSize, void* jobs)
 {
 
-	char* Command;
-	char* delimiters = " \t\n";
-	char *args[MAX_ARG];
+	//char* Command;
+	//const char* delimiters = " \t\n";
+	//char *args[MAX_ARG];
 	if (lineSize[strlen(lineSize)-2] == '&')
 	{
 		lineSize[strlen(lineSize)-2] = '\0';
