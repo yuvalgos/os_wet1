@@ -2,17 +2,19 @@
 //********************************************
 #include "commands.h"
 
+char last_pwd[MAX_LINE_SIZE] = {0};
+
 //********************************************
 // function name: ExeCmd
 // Description: interperts and executes built-in commands
 // Parameters: pointer to jobs, command string
 // Returns: 0 - success,1 - failure
 //**************************************************************************************
-int ExeCmd(void* jobs, char* lineSize, char* cmdString, std::list<std::string> command_history)
+int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<std::string> command_history)
 {
 	char* cmd; 
 	char* args[MAX_ARG];
-	//char pwd[MAX_LINE_SIZE];
+	char pwd[MAX_LINE_SIZE];
 	const char* delimiters = " \t\n";  
 	int i = 0, num_arg = 0;
 	bool illegal_cmd = false; // illegal command
@@ -34,48 +36,75 @@ int ExeCmd(void* jobs, char* lineSize, char* cmdString, std::list<std::string> c
 /*************************************************/
 	if (!strcmp(cmd, "cd") ) 
 	{
+		bool is_print = false;
+		if(std::string(args[1]) == "-") 
+		{
+			strcpy(args[1],last_pwd);
+			is_print = true;
+		}
+
+		getcwd(last_pwd,MAX_LINE_SIZE);
+
+		if(chdir(args[1]) < 0)
+		{
+			if(errno == ENOENT)
+			{
+				std::cout << "smash error: > \"" << args[1]
+				 << "\" –No such file or directory" << std::endl;
+			}
+		}
+		else if(is_print)
+		{
+			std::cout << getcwd(pwd,MAX_LINE_SIZE) << std::endl;
+		}
 		
 	} 
-	
-	/*************************************************/
 	else if (!strcmp(cmd, "pwd")) 
 	{
-		
+		if(getcwd(pwd,MAX_LINE_SIZE) != NULL)
+		{
+			std::cout << pwd << std::endl;
+		}
 	}
-	
-	/*************************************************/
 	else if (!strcmp(cmd, "history"))
 	{
  		for(auto iter_command = command_history.begin(); iter_command !=command_history.end(); iter_command++ )
 			std::cout << *iter_command << std::endl;
 	}
-	/*************************************************/
-	
 	else if (!strcmp(cmd, "jobs")) 
 	{
- 		
+		int i = 1;
+ 		for(auto iter_jobs = jobs.begin(); iter_jobs != jobs.end(); iter_jobs++)
+		{
+			std::cout << "[" << i << "] " << iter_jobs->second.name 
+				<< " : " << iter_jobs->second.pid << " " << iter_jobs->second.getTime() 
+				<< " secs";
+
+			if(iter_jobs->second.isStopped)
+			{
+				std::cout << " (Stopped)";
+			}
+			std::cout << std::endl;
+
+			i++;
+		}
 	}
-	/*************************************************/
 	else if (!strcmp(cmd, "showpid")) 
 	{
 		
 	}
-	/*************************************************/
 	else if (!strcmp(cmd, "fg")) 
 	{
 		
 	} 
-	/*************************************************/
 	else if (!strcmp(cmd, "bg")) 
 	{
   		
 	}
-	/*************************************************/
 	else if (!strcmp(cmd, "quit"))
 	{
    		
 	} 
-	/*************************************************/
 	else // external command
 	{
  		ExeExternal(args, cmdString);
@@ -149,7 +178,7 @@ int ExeComp(char* lineSize)
 // Parameters: command string, pointer to jobs
 // Returns: 0- BG command -1- if not
 //**************************************************************************************
-int BgCmd(char* lineSize, void* jobs)
+int BgCmd(char* lineSize, std::map<int, Job> jobs)
 {
 
 	//char* Command;
