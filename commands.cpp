@@ -108,6 +108,41 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
 	{
    		
 	} 
+	else if (!strcmp(cmd, "kill")) 
+	{
+		// arg[1] = -signum	
+		// arg[2] = job 
+		
+		int signum = -(std::atoi(args[1]));
+		int job_num = std::atoi(args[2]);
+		
+		if(jobs.size() < (unsigned int)job_num)
+		{
+			std::cout << "smash error: > kill " << job_num 
+			<< " –job does not exist" << std::endl;
+			return 0;
+		}
+
+		auto iter_jobs = jobs.begin();
+		for(int i = 1; i<job_num; i++)
+		{
+			iter_jobs ++;
+		}
+		std::cout << iter_jobs->first << " " << signum << std::endl;
+		if(kill( (pid_t)(iter_jobs->first), signum) < 0 )
+		{
+			std::cout << "smash error: > kill " << job_num 
+			<< " -cannot send signal" << std::endl;
+			return 0;
+		}
+
+		int status;
+		waitpid(iter_jobs->first, &status, WNOHANG | WUNTRACED);
+		std::cout << WIFSTOPPED(status) << std::endl;
+
+		return 0;
+
+	} 
 	else if (!strcmp(cmd, "cp")) 
 	{
 		char buf;
@@ -135,6 +170,40 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
                 close(sourcefile);
                 close(destfile);
             }
+		}
+	} 
+	else if (!strcmp(cmd, "diff")) 
+	{
+		char buf1, buf2;
+		int f1 = open(args[1], O_RDONLY);
+		int f2 = open(args[2], O_RDONLY);
+		int n1, n2;
+        if(f1 == -1 || f2 == -1)
+        {
+            perror("FILE ERROR");
+            exit(0);
+        }
+        else
+        {
+			n1=read(f1,&buf1,1);
+			n2=read(f2,&buf2,1);
+			while(n1 != 0 || n2 != 0 )
+			{
+				//std::cout << "buf1: " << buf1 << " buf2: " << buf2 << std::endl; 
+				if(buf1 != buf2)
+				{
+					std::cout << 1 << std::endl;
+					close(f1);
+					close(f2);
+					return 0;
+				}
+				n1=read(f1,&buf1,1);
+				n2=read(f2,&buf2,1);
+			}
+			std::cout << 0 << std::endl;
+			close(f1);
+			close(f2);
+			return 0;
 		}
 	} 
 	else // external command
