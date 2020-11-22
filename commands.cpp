@@ -1,6 +1,9 @@
 //		commands.c
 //********************************************
 #include "commands.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 char last_pwd[MAX_LINE_SIZE] = {0};
 
@@ -91,7 +94,7 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
 	}
 	else if (!strcmp(cmd, "showpid")) 
 	{
-		
+		std::cout << "smash pid is "<< getpid() << std::endl;
 	}
 	else if (!strcmp(cmd, "fg")) 
 	{
@@ -104,6 +107,35 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
 	else if (!strcmp(cmd, "quit"))
 	{
    		
+	} 
+	else if (!strcmp(cmd, "cp")) 
+	{
+		char buf;
+		int sourcefile = open(args[1], O_RDONLY);
+		int destfile, n;
+        if(sourcefile == -1)
+        {
+            perror("SOURCE FILE ERROR");
+            exit(0);
+        }
+        else
+        {
+            destfile = open(args[2],O_WRONLY | O_CREAT , 0641);
+            if(destfile == -1)
+            {
+                perror("DESTINATION FILE ERROR");
+                exit(0);
+            }
+            else
+            {
+                while((n=read(sourcefile,&buf,1)) != 0)
+                {
+                    write( destfile, &buf, 1 );
+                }
+                close(sourcefile);
+                close(destfile);
+            }
+		}
 	} 
 	else // external command
 	{
@@ -125,75 +157,77 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
 //**************************************************************************************
 void ExeExternal(char *args[MAX_ARG], char* cmdString)
 {
-	// int pID;
-    // switch(pID = fork()) 
-	// {
-    // 		case -1: 
-	// 				// Add your code here (error)
-	// 				break;
-	// 				/* 
-	// 				your code
-	// 				*/
-    //     	case 0 :
-    //             	// Child Process
-    //            		//setpgrp();
+	int pID;
+    switch(pID = fork()) 
+	{
+    		case -1: 
 					
-	// 		        // Add your code here (execute an external command)
-					
-	// 				/* 
-	// 				your code
-	// 				*/
-			
-	// 		default:
-    //             	// Add your code here
-	// 				break;
-	// 				/* 
-	// 				your code
-	// 				*/
-	// }
+					perror("smash error: > ");
+					break;
+        	case 0 :
+               		setpgrp();
+					if(execv(cmdString, &args[1]) < 0)
+					{
+						perror("smash error: > ");
+						exit(1);
+					}
+					break;
+
+			default:
+                	waitpid(pID, NULL, 0);
+					break;
+	}
 }
-//**************************************************************************************
-// function name: ExeComp
-// Description: executes complicated command
-// Parameters: command string
-// Returns: 0- if complicated -1- if not
-//**************************************************************************************
-int ExeComp(char* lineSize)
-{
-	//char ExtCmd[MAX_LINE_SIZE+2];
-	//char *args[MAX_ARG];
-    if ((strstr(lineSize, "|")) || (strstr(lineSize, "<")) || (strstr(lineSize, ">")) || (strstr(lineSize, "*")) || (strstr(lineSize, "?")) || (strstr(lineSize, ">>")) || (strstr(lineSize, "|&")))
-    {
-		// Add your code here (execute a complicated command)
-					
-		/* 
-		your code
-		*/
-	} 
-	return -1;
-}
+
 //**************************************************************************************
 // function name: BgCmd
 // Description: if command is in background, insert the command to jobs
 // Parameters: command string, pointer to jobs
 // Returns: 0- BG command -1- if not
 //**************************************************************************************
-int BgCmd(char* lineSize, std::map<int, Job> jobs)
+int BgCmd(char* lineSize, std::map<int, Job>& jobs)
 {
 
-	//char* Command;
-	//const char* delimiters = " \t\n";
-	//char *args[MAX_ARG];
+	char* cmd;
+	const char* delimiters = " \t\n";
+	char *args[MAX_ARG];
+	
 	if (lineSize[strlen(lineSize)-2] == '&')
 	{
 		lineSize[strlen(lineSize)-2] = '\0';
-		// Add your code here (execute a in the background)
-					
-		/* 
-		your code
-		*/
-		
+		int num_arg = 0;
+		//bool illegal_cmd = false; // illegal command
+		cmd = strtok(lineSize, delimiters);
+		if (cmd == NULL)
+			return 0; 
+		args[0] = cmd;
+		for (int i=1; i<MAX_ARG; i++)
+		{
+			args[i] = strtok(NULL, delimiters); 
+			if (args[i] != NULL) 
+				num_arg++; 
+		}
+
+		int pID;
+   		switch(pID = fork()) 
+		{
+    		case -1: 
+					perror("smash error: > ");
+					break;
+        	case 0 :
+					if(execv(lineSize, &args[1]) < 0)
+					{
+						perror("smash error: > ");
+						exit(1);
+					}
+			default:
+					Job new_job = Job(lineSize, pID);
+					jobs[pID] = new_job;
+		}
+
+		return 0;
 	}
+
 	return -1;
 }
 
