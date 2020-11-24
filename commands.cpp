@@ -76,9 +76,32 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
 	}
 	else if (!strcmp(cmd, "jobs")) 
 	{
-		int i = 1;
- 		for(auto iter_jobs = jobs.begin(); iter_jobs != jobs.end(); iter_jobs++)
+		for(auto job_it = jobs.begin(); job_it != jobs.end(); )
 		{
+			int status;
+			pid_t pid = waitpid(job_it->first, &status, WNOHANG);
+			if(pid == 0)
+			{
+				// process not exited and still exists
+				job_it++;
+			}
+			else
+			{
+				job_it = jobs.erase(job_it);
+			}
+			
+		}
+		
+		int i = 1;
+		for(auto iter_jobs = jobs.begin(); iter_jobs != jobs.end(); iter_jobs++)
+		{
+			int status;
+			pid_t pid = waitpid(iter_jobs->first, &status, WNOHANG | WUNTRACED);
+			if(pid > 0)
+			{
+				bool is_stopped = WIFSTOPPED(status);
+				iter_jobs->second.isStopped = is_stopped;
+			}
 			std::cout << "[" << i << "] " << iter_jobs->second.name 
 				<< " : " << iter_jobs->second.pid << " " << iter_jobs->second.getTime() 
 				<< " secs";
@@ -106,7 +129,23 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
 	}
 	else if (!strcmp(cmd, "quit"))
 	{
-   		
+   		if(num_arg == 0)
+		{
+		   exit(0);
+		}
+		else if (!strcmp(args[1],"kill"))
+		{
+			int i=1;
+			for(auto job_it = jobs.begin(); job_it != jobs.end(); job_it++)
+			{
+				
+				auto line_str = "kill -" + std::to_string(SIGTERM) + " " + std::to_string(i);
+				auto line = (char*)line_str.c_str();
+				//std::cout << line << std::endl;
+				ExeCmd(jobs, line, line, command_history);
+				i++;
+			}
+		}
 	} 
 	else if (!strcmp(cmd, "kill")) 
 	{
@@ -128,18 +167,19 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
 		{
 			iter_jobs ++;
 		}
-		std::cout << iter_jobs->first << " " << signum << std::endl;
-		if(kill( (pid_t)(iter_jobs->first), signum) < 0 )
+
+		if(kill((pid_t)(iter_jobs->first), signum) < 0 )
 		{
 			std::cout << "smash error: > kill " << job_num 
 			<< " -cannot send signal" << std::endl;
 			return 0;
 		}
-
-		int status;
-		waitpid(iter_jobs->first, &status, WNOHANG | WUNTRACED);
-		std::cout << WIFSTOPPED(status) << std::endl;
-
+		else
+		{
+			std::cout << "signal " << strsignal(signum) << " was sent to pid " 
+					  << iter_jobs->first << std::endl;
+		}
+				
 		return 0;
 
 	} 
