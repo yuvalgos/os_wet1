@@ -9,11 +9,11 @@ smash: $(OBJS)
 	$(CCLINK) -o smash $(OBJS)
 
 # Creating the object files
-commands.o: commands.cpp commands.h 
+commands.o: commands.cpp commands.h Job.h 
 
-smash.o: smash.cpp commands.h signals.h
+smash.o: smash.cpp commands.h signals.h Job.h
 
-signals.o: signals.cpp signals.h
+signals.o: signals.cpp signals.h Job.h
 
 # Cleaning old files before new make
 clean:
