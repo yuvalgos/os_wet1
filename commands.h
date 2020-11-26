@@ -14,6 +14,7 @@
 #include <iostream>
 #include <map>
 #include <chrono>
+#include <thread>
 
 #define MAX_LINE_SIZE 80
 #define MAX_ARG 20

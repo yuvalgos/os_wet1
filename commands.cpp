@@ -109,6 +109,8 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
 			if(iter_jobs->second.isStopped)
 			{
 				std::cout << " (Stopped)";
+				kill((pid_t)(iter_jobs->first), SIGCONT);
+				kill((pid_t)(iter_jobs->first), SIGTSTP);
 			}
 			std::cout << std::endl;
 
@@ -125,7 +127,40 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
 	} 
 	else if (!strcmp(cmd, "bg")) 
 	{
-  		
+		int job_idx = 0;
+		if (num_arg == 0)
+		{
+			job_idx = jobs.size();	
+		}
+		else
+		{
+			job_idx = std::atoi(args[1]);
+		}
+		auto job_it = jobs.begin();
+		for (int i = 1; i < job_idx; i++)
+		{
+			job_it++;
+		}
+
+		int status;
+		bool is_stopped = false;
+		pid_t pid = waitpid(job_it->first, &status, WNOHANG | WUNTRACED);
+		std::cout << "bg-waitpid return: " << pid << std::endl;
+		if(pid > 0)
+		{
+			is_stopped = WIFSTOPPED(status);
+		}
+
+		if(!is_stopped)
+		{
+			std::cout << "smash error: > process not Stopped" << std::endl;
+			return 0;
+		}
+		std::cout << job_it->second.name << std::endl;
+		auto line_str = "kill -" + std::to_string(SIGCONT) + " " + std::to_string(job_idx);
+		auto line = (char*)line_str.c_str();
+		ExeCmd(jobs, line, line, command_history);
+		return 0;
 	}
 	else if (!strcmp(cmd, "quit"))
 	{
@@ -137,14 +172,28 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
 		{
 			int i=1;
 			for(auto job_it = jobs.begin(); job_it != jobs.end(); job_it++)
-			{
-				
+			{	
 				auto line_str = "kill -" + std::to_string(SIGTERM) + " " + std::to_string(i);
 				auto line = (char*)line_str.c_str();
-				//std::cout << line << std::endl;
 				ExeCmd(jobs, line, line, command_history);
+				std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+				int status;
+				pid_t pid = waitpid(job_it->first, &status, WNOHANG);
+				if(pid == 0)
+				{
+					std::cout << "(5 sec passed) ";
+					auto line_str = "kill -" + std::to_string(SIGKILL) + " " + std::to_string(i);
+					auto line = (char*)line_str.c_str();
+					ExeCmd(jobs, line, line, command_history);
+				}
+				else
+				{
+					std::cout << "Done" << std::endl;
+				}
+				
 				i++;
 			}
+			exit(0);
 		}
 	} 
 	else if (!strcmp(cmd, "kill")) 
