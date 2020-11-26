@@ -16,11 +16,10 @@
 #include <chrono>
 #include <thread>
 
-#include "signals.h"
-
-
 #define MAX_LINE_SIZE 80
 #define MAX_ARG 20
+
+extern Job fg_job;
 
 class Job 
 {
@@ -51,5 +50,6 @@ public:
 int BgCmd(char* lineSize, std::map<int, Job>& jobs);
 int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<std::string> command_history);
 void ExeExternal(char *args[MAX_ARG], char* cmdString);
+
 #endif
 

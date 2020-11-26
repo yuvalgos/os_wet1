@@ -11,9 +11,15 @@
 
 void catch_stp(int sig_num)
 {
-   std::cout << "catch_stp" << std::endl;
+   if(fg_job.pid != -1)
+   {
+      kill(fg_job.pid, SIGTSTP);
+   }
 }
 void catch_int(int sig_num)
 {
-   std::cout << "catch_int" << std::endl;
+   if(fg_job.pid != -1)
+   {
+      kill(fg_job.pid, SIGINT);
+   }
 }

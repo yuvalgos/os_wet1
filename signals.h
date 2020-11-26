@@ -7,8 +7,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <map>
 
-int fg_job_pid = -1;
+
+extern class Job;
+extern std::map<int, Job> jobs;
+extern Job fg_job;
 
 void catch_stp(int sig_num);
 void catch_int(int sig_num);

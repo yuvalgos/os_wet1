@@ -22,6 +22,7 @@ main file. This file contains the main function of smash
 
 
 std::map<int, Job> jobs;
+Job fg_job;
 
 char* L_Fg_Cmd;
 char lineSize[MAX_LINE_SIZE]; 

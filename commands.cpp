@@ -138,8 +138,10 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
 			job_it++;
 		}
 		kill(job_it->first, SIGCONT);
+		//fg_job_pid = pID;
 		waitpid(job_it->first, NULL, 0);
-
+		//fg_job_pid = -1;
+		return 0;
 	} 
 	else if (!strcmp(cmd, "bg")) 
 	{
@@ -354,8 +356,9 @@ void ExeExternal(char *args[MAX_ARG], char* cmdString)
 					break;
 
 			default:
-					fg_job_pid = pID;
+					fg_job = Job(args[0], pID, false);
                 	waitpid(pID, NULL, 0);
+					//fg_job_pid = -1;
 					break;
 	}
 }
