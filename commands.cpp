@@ -123,7 +123,23 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
 	}
 	else if (!strcmp(cmd, "fg")) 
 	{
-		
+		int job_idx = 0;
+		if (num_arg == 0)
+		{
+			job_idx = jobs.size();	
+		}
+		else
+		{
+			job_idx = std::atoi(args[1]);
+		}
+		auto job_it = jobs.begin();
+		for (int i = 1; i < job_idx; i++)
+		{
+			job_it++;
+		}
+		kill(job_it->first, SIGCONT);
+		waitpid(job_it->first, NULL, 0);
+
 	} 
 	else if (!strcmp(cmd, "bg")) 
 	{
@@ -145,7 +161,6 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
 		int status;
 		bool is_stopped = false;
 		pid_t pid = waitpid(job_it->first, &status, WNOHANG | WUNTRACED);
-		std::cout << "bg-waitpid return: " << pid << std::endl;
 		if(pid > 0)
 		{
 			is_stopped = WIFSTOPPED(status);
@@ -173,18 +188,25 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
 			int i=1;
 			for(auto job_it = jobs.begin(); job_it != jobs.end(); job_it++)
 			{	
-				auto line_str = "kill -" + std::to_string(SIGTERM) + " " + std::to_string(i);
-				auto line = (char*)line_str.c_str();
-				ExeCmd(jobs, line, line, command_history);
+				std::cout << "[" << i << "] " << job_it->second.name <<
+				 " - Sending SIGTERM..." << std::flush;
+				kill((pid_t)(job_it->first), SIGTERM);
+
 				std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+
 				int status;
 				pid_t pid = waitpid(job_it->first, &status, WNOHANG);
 				if(pid == 0)
 				{
-					std::cout << "(5 sec passed) ";
-					auto line_str = "kill -" + std::to_string(SIGKILL) + " " + std::to_string(i);
-					auto line = (char*)line_str.c_str();
-					ExeCmd(jobs, line, line, command_history);
+					std::cout << " (5 sec passed) Sending SIGKILL...";
+					if(kill((pid_t)(job_it->first), SIGKILL)<0)
+					{
+						std::cout << "Error sending SIGKILL" << std::endl;
+					}
+					else
+					{
+						std::cout << "Done" << std::endl;
+					}		
 				}
 				else
 				{
@@ -332,6 +354,7 @@ void ExeExternal(char *args[MAX_ARG], char* cmdString)
 					break;
 
 			default:
+					fg_job_pid = pID;
                 	waitpid(pID, NULL, 0);
 					break;
 	}
@@ -373,6 +396,7 @@ int BgCmd(char* lineSize, std::map<int, Job>& jobs)
 					perror("smash error: > ");
 					break;
         	case 0 :
+					setpgrp();
 					if(execv(lineSize, &args[1]) < 0)
 					{
 						perror("smash error: > ");

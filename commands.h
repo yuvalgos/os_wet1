@@ -16,6 +16,9 @@
 #include <chrono>
 #include <thread>
 
+#include "signals.h"
+
+
 #define MAX_LINE_SIZE 80
 #define MAX_ARG 20
 

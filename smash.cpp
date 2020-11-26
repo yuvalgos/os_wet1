@@ -41,7 +41,15 @@ int main(int argc, char *argv[])
 	/************************************/
 	//NOTE: the signal handlers and the function/s that sets the handler should be found in siganls.c
 	//set your signal handlers here
-	/* add your code here */
+
+	struct sigaction act_stp;
+	struct sigaction act_int;
+
+	act_stp.sa_handler = &catch_stp;
+	act_int.sa_handler = &catch_int;
+
+	sigaction(SIGTSTP, &act_stp, NULL);
+	sigaction(SIGINT, &act_int, NULL);
 
 	/************************************/
 

@@ -8,7 +8,9 @@
 #include <string.h>
 #include <signal.h>
 
+int fg_job_pid = -1;
 
-
+void catch_stp(int sig_num);
+void catch_int(int sig_num);
 #endif
 
