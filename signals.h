@@ -9,8 +9,8 @@
 #include <signal.h>
 #include <map>
 
+#include "Job.h"
 
-extern class Job;
 extern std::map<int, Job> jobs;
 extern Job fg_job;
 

@@ -17,9 +17,10 @@ main file. This file contains the main function of smash
 #include <chrono>
 #include <map>
 
+#include "Job.h"
+
 #define MAX_LINE_SIZE 80
 #define MAXARGS 20
-
 
 std::map<int, Job> jobs;
 Job fg_job;
