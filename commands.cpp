@@ -13,7 +13,7 @@ char last_pwd[MAX_LINE_SIZE] = {0};
 // Parameters: pointer to jobs, command string
 // Returns: 0 - success,1 - failure
 //**************************************************************************************
-int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<std::string> command_history)
+int ExeCmd(std::map<int, Job>& jobs, char* lineSize, char* cmdString, std::list<std::string> command_history)
 {
 	char* cmd; 
 	char* args[MAX_ARG];
@@ -97,7 +97,7 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
 		{
 			int status;
 			pid_t pid = waitpid(iter_jobs->first, &status, WNOHANG | WUNTRACED);
-			if(pid > 0)
+			if(pid >= 0)
 			{
 				bool is_stopped = WIFSTOPPED(status);
 				iter_jobs->second.isStopped = is_stopped;
@@ -132,15 +132,21 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
 		{
 			job_idx = std::atoi(args[1]);
 		}
+		if((unsigned)job_idx > jobs.size()) //illigal job number
+		{
+			std::cout << "smash error: > " << cmdString << std::endl;
+			return 0;
+		}
 		auto job_it = jobs.begin();
 		for (int i = 1; i < job_idx; i++)
 		{
 			job_it++;
 		}
 		kill(job_it->first, SIGCONT);
-		//fg_job_pid = pID;
-		waitpid(job_it->first, NULL, 0);
-		//fg_job_pid = -1;
+		fg_job = Job(job_it->second.name, job_it->first, false);
+		std::cout << job_it->second.name << std::endl;
+		waitpid(job_it->first, NULL, WUNTRACED);
+		fg_job = Job();
 		return 0;
 	} 
 	else if (!strcmp(cmd, "bg")) 
@@ -153,6 +159,11 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
 		else
 		{
 			job_idx = std::atoi(args[1]);
+		}
+		if((unsigned)job_idx > jobs.size()) //illigal job number
+		{
+			std::cout << "smash error: > " << cmdString << std::endl;
+			return 0;
 		}
 		auto job_it = jobs.begin();
 		for (int i = 1; i < job_idx; i++)
@@ -181,7 +192,23 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
 	}
 	else if (!strcmp(cmd, "quit"))
 	{
-   		if(num_arg == 0)
+   		for(auto job_it = jobs.begin(); job_it != jobs.end(); )
+		{
+			int status;
+			pid_t pid = waitpid(job_it->first, &status, WNOHANG);
+			if(pid == 0)
+			{
+				// process not exited and still exists
+				job_it++;
+			}
+			else
+			{
+				job_it = jobs.erase(job_it);
+			}
+			
+		}
+		
+		if(num_arg == 0)
 		{
 		   exit(0);
 		}
@@ -263,16 +290,16 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
 		int destfile, n;
         if(sourcefile == -1)
         {
-            perror("SOURCE FILE ERROR");
-            exit(0);
+            std::cout << "smash error: > " << cmdString << std::endl;
+            return 0;
         }
         else
         {
             destfile = open(args[2],O_WRONLY | O_CREAT , 0641);
             if(destfile == -1)
             {
-                perror("DESTINATION FILE ERROR");
-                exit(0);
+                std::cout << "smash error: > " << cmdString << std::endl;
+            	return 0;
             }
             else
             {
@@ -293,8 +320,8 @@ int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<s
 		int n1, n2;
         if(f1 == -1 || f2 == -1)
         {
-            perror("FILE ERROR");
-            exit(0);
+            std::cout << "smash error: > " << cmdString << std::endl;
+            return 0;
         }
         else
         {
@@ -357,8 +384,8 @@ void ExeExternal(char *args[MAX_ARG], char* cmdString)
 
 			default:
 					fg_job = Job(args[0], pID, false);
-                	waitpid(pID, NULL, 0);
-					//fg_job_pid = -1;
+                	waitpid(pID, NULL, WUNTRACED);
+					fg_job = Job();
 					break;
 	}
 }

@@ -24,7 +24,7 @@
 extern Job fg_job;
 
 int BgCmd(char* lineSize, std::map<int, Job>& jobs);
-int ExeCmd(std::map<int, Job> jobs, char* lineSize, char* cmdString, std::list<std::string> command_history);
+int ExeCmd(std::map<int, Job>& jobs, char* lineSize, char* cmdString, std::list<std::string> command_history);
 void ExeExternal(char *args[MAX_ARG], char* cmdString);
 
 #endif

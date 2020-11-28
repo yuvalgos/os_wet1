@@ -3,10 +3,11 @@ CC = g++
 CXXFLAGS = -g -std=c++11 -Wall -Werror -pedantic-errors -DNDEBUG
 CCLINK = $(CC) 
 OBJS = smash.o commands.o signals.o
+TARGET = smash
 RM = rm -f
 # Creating the  executable
 smash: $(OBJS)
-	$(CCLINK) -o smash $(OBJS)
+	$(CCLINK) -o $(TARGET) $(OBJS)
 
 # Creating the object files
 commands.o: commands.cpp commands.h Job.h 
