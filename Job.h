@@ -1,3 +1,8 @@
+#pragma once
+#include <chrono>
+#include <thread>
+#include <string>
+
 class Job 
 {
 public:
