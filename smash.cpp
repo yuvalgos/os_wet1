@@ -19,8 +19,8 @@ main file. This file contains the main function of smash
 
 #include "Job.h"
 
-#define MAX_LINE_SIZE 80
-#define MAXARGS 20
+#define MAX_LINE_SIZE 1000
+#define MAXARGS 255
 
 std::map<int, Job> jobs;
 Job fg_job;
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 		//insert to command history:
 		std::string cmd(cmdString);
 		command_history.push_back(cmd);
-		if(command_history.size() > 5)
+		if(command_history.size() > 50)
 		{
 			command_history.pop_front();
 		}

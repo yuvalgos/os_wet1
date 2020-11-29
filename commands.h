@@ -18,8 +18,8 @@
 
 #include "Job.h"
 
-#define MAX_LINE_SIZE 80
-#define MAX_ARG 20
+#define MAX_LINE_SIZE 1000
+#define MAX_ARG 255
 
 extern Job fg_job;
 

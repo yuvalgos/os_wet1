@@ -14,6 +14,7 @@ void catch_stp(int sig_num)
    if(fg_job.pid != -1)
    {
       kill(fg_job.pid, SIGTSTP);
+      fg_job.isStopped = true;
       jobs[fg_job.pid] = fg_job;
       fg_job = Job();
    }
